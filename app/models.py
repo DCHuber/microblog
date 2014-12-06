@@ -21,9 +21,12 @@ class User(db.Model):
 								backref=db.backref('followers', lazy='dynamic'),
 								lazy='dynamic')
 
+	def sorted_posts(self):
+		return self.posts.order_by(Post.timestamp.desc())
+
 	def followed_posts(self):
 		return Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(followers.c.follower_id == self.id).order_by(Post.timestamp.desc())
-		
+
 	def follow(self, user):
 		if not self.is_following(user):
 			self.followed.append(user)
