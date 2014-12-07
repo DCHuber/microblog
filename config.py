@@ -24,10 +24,12 @@ POSTS_PER_PAGE = 5
   # command to run an smtp console window:
   # sudo python -m smtpd -n -c DebuggingServer localhost:25
 
-MAIL_SERVER = 'localhost'
-MAIL_PORT = 25
-MAIL_USERNAME = None
-MAIL_PASSWORD = None
+MAIL_SERVER = 'smtp.gmail.com'
+MAIL_PORT = 465
+MAIL_USE_TLS = False
+MAIL_USE_SSL = True
+MAIL_USERNAME = 'someone'
+MAIL_PASSWORD = 'something'
 
 # administrator list
-ADMINS = ['you@example.com']    
+ADMINS = ['someone@gmail.com']    
