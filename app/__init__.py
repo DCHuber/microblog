@@ -4,12 +4,14 @@ from flask.ext.openid import OpenID
 from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy 
+from momentjs import momentjs
 
 
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
+app.jinja_env.globals['momentjs'] = momentjs
 lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
