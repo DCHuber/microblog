@@ -1,10 +1,11 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask.ext.sqlalchemy import get_debug_queries
 from app import app, db, lm, oid 
 from forms import LoginForm, EditForm, PostForm, SearchForm
 from models import User, Post
 from datetime import datetime
-from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS
+from config import POSTS_PER_PAGE, MAX_SEARCH_RESULTS, DATABASE_QUERY_TIMEOUT
 
 @lm.user_loader
 def load_user(id):
@@ -44,6 +45,13 @@ def before_request():
 		db.session.commit()
 		g.search_form = SearchForm()
 
+@app.after_request
+def after_request(response):
+	for query in get_debug_queries():
+		if query.duration >= DATABASE_QUERY_TIMEOUT:
+			app.logger.warning("SLOW QUERY: %s\nParameters: %s\nDuration: %fs\nContext: %s\n" % (query.statment, query.parameters, query.duration, query.context))
+	return response
+
 
 @app.route('/login', methods=['GET', 'POST'])
 @oid.loginhandler
@@ -59,6 +67,21 @@ def login():
 							form=form,
 							providers=app.config['OPENID_PROVIDERS'])
 
+#Route to delete a post
+@app.route('/delete/<int:id>')
+@login_required
+def delete(id):
+	post = Post.query.get(id)
+	if post is None:
+		flash('Unable to delete.  Post not found.')
+		return redirect(url_for('index'))
+	if post.author.id != g.user.id:
+		flash('Unable to delete other users post.')
+		return redirect(url_for('index'))
+	db.session.delete(post)
+	db.session.commit()
+	flash('Your post has been deleted.')
+	return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():

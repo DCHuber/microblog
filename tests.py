@@ -1,11 +1,17 @@
 #!flask/bin/python
+
+from coverage import coverage
+cov = coverage(branch=True, omit=['flask/*', 'tests.py'])
+cov.start()
+
 import os
 import unittest
-
 from config import basedir
 from app import app, db
 from app.models import User, Post
 from datetime import datetime, timedelta
+
+
 
 class TestCase(unittest.TestCase):
 	def setUp(self):
@@ -62,6 +68,20 @@ class TestCase(unittest.TestCase):
 		assert u1.followed.count() == 0
 		assert u2.followers.count() == 0
 
+	# Test case for multiple sessions issues
+	def test_delete_post(self):
+		u = User(nickname='john', email='john@example.com')
+		p = Post(body='test post', author=u, timestamp=datetime.utcnow())
+		db.session.add(u)
+		db.session.add(p)
+		db.session.commit()
+		p = Post.query.get(1)
+		db.session.remove()
+		db.session = db.create_scoped_session()
+		db.session.delete(p)
+		db.session.commit()
+
+
 	def test_follow_posts(self):
 		# make four users
 		u1 = User(nickname='john', email='john@example.com')
@@ -111,6 +131,30 @@ class TestCase(unittest.TestCase):
 		assert f3 == [p4, p3]
 		assert f4 == [p4]
 
+	def test_user(self):
+		#n = User.make_valid_nickname('John_123')
+		#assert n == 'John_123'
+
+		u = User(nickname='john', email='john@example.com')
+		db.session.add(u)
+		db.session.commit()
+		assert u.is_authenticated() is True
+		assert u.is_active() is True
+		assert u.is_anonymous() is False
+		assert u.id == int(u.get_id())
+
+	def __repr__(self):  # pragma: no cover
+		return '<User %r>' % (self.nickname)
         
 if __name__ == '__main__':
-	unittest.main()
+	try:
+		unittest.main()
+	except:
+		pass
+	cov.stop()
+	cov.save()
+	print "\n\nCoverage Report:\n"
+	cov.report()
+	print "HTML version: " + os.path.join(basedir, "tmp/coverage/index.html")
+	cov.html_report(directory='tmp/coverage')
+	cov.erase()

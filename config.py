@@ -6,6 +6,8 @@ MAX_SEARCH_RESULTS = 50
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+SQLALCHEMY_RECORD_QUERIES = True
+DATABASE_QUERY_TIMEOUT = 0.5
 
 WTF_CSRF_ENABLED = True
 SECRET_KEY ='randall-munroe-god'
